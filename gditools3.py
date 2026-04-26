@@ -29,6 +29,8 @@ from struct   import unpack
 from datetime import datetime
 from io       import BytesIO
 
+import json
+
 
 __version__ = "3.0.1"
 
@@ -439,7 +441,7 @@ class CdImage():
 
     def seek(self, a, b = 0):
         if self.__mode == 2048:
-            self.file.seek(a, b)
+            self.file.seek(int(a), b)
 
         elif self.__mode in [2352, 2336]:
             if b == 0:
@@ -925,6 +927,37 @@ def getDummyDataTrack():
     return decompress(decompress(b64decode('eNqruPX29um8yw4iDBc8b7qI7maKNUpyFV8iHO41ZelTn+DpFo6FShP5H27/sekf8xFdRkfvyI8BFu7bju8r/jvJTersCT5GBvzgRejlKW17DdaLz/7+8fmy2ctu2gXt33/v+Psu93e7o3eZfvn98IdeSc2ntb8qt1eK+r3v83Per/3r4eGLk5efj7sn8/Z8/5/QzXtW3E69O2WzTLl1oZHU0s+rT5vFXft8J+92aV7S1lNPq3Z2rV+92WKOj16SXM702Udzos59trOoC15i0nW9uXxnzNbTR39+XbB23auf60LP5RXveqWXLrP65avcvX2vY8zq/5R2m8gsV4rl6U76rqN59w73EvmWakmpt//9lh+2f3x5+j95oCcsYvbetix7XA9ivvlY/2LfemOwv9nfXP9/w3bOR6WaswblDKOAWHAg/7tkxo8DNwGBZqUF')))
 
 
+def parse_gdi_primary(gdi_jsonFile) -> list:
+    l = []
+#
+#    l.append(gdiTextFile.readline().strip())  # 轨道数
+#
+#    for line in gdiTextFile.readlines():
+#        line = line.rstrip().split()
+#        # 轨号、起始LBA、轨类型、扇区大小
+#        (trackID, startLBA, trackType, sectorSize) = line[0:4]
+#        offset = line[-1]  # 偏移
+#
+#        fileName = ("".join(line[4:-1])).strip('"')
+#
+#        l.append([trackID, startLBA, trackType, sectorSize, fileName, offset])
+#
+#    return l
+
+    data = json.load(gdi_jsonFile)
+    l.append([str(data["trackCount"])])
+    for track in data["trackList"]:
+        l.append([
+            str(track["trackID"]),
+            str(track["startLBA"]),
+            str(track["trackType"]),
+            str(track["sectorSize"]),
+            track["fileName"],
+            str(track["offset"])
+        ])
+
+    return l
+
 
 
 def parse_gdi(filename, verbose=False):
@@ -932,7 +965,9 @@ def parse_gdi(filename, verbose=False):
     dirname  = os.path.dirname(filename)
 
     with open(filename) as f: # if i.split() removes blank lines
-        l = [i.split() for i in f.readlines() if i.split()]
+        #l = [i.split() for i in f.readlines() if i.split()]
+        l = parse_gdi_primary(f)
+    print(l)
     if not int(l[3][1]) == 45000:
         raise AssertionError('Invalid gdi file: track03 LBA should be 45000')
 

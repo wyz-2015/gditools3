@@ -5,9 +5,10 @@ import struct
 import sys
 from   io import BytesIO
 
-if sys.version < "3":
-      from urllib         import FancyURLopener
-else: from urllib.request import FancyURLopener
+# if sys.version < "3":
+#      from urllib         import FancyURLopener
+# else: from urllib.request import FancyURLopener
+import requests
 
 
 class ISO9660IOError(IOError):
@@ -123,10 +124,16 @@ class ISO9660(object):
         start = sector * 2048
         if self._buff:
             self._buff.close()
-        opener = FancyURLopener()
-        opener.http_error_206 = lambda *a, **k: None
-        opener.addheader("Range", "bytes=%d-%d" % (start, start+length-1))
-        self._buff = opener.open(self._url)
+        
+        # opener = FancyURLopener()
+        # opener.http_error_206 = lambda *a, **k: None
+        # opener.addheader("Range", "bytes=%d-%d" % (start, start+length-1))
+        # self._buff = opener.open(self._url)
+
+        headers = {
+            "Range": "bytes={0:n}-{1:n}".format(start, start + length - 1)
+        }
+        self._buff = requests.get(self._url, headers=headers, stream=True)
 
     def _get_sector_file(self, sector, length):
         with open(self._url, 'rb') as f:
