@@ -24,7 +24,7 @@ import shutil
 import getopt
 import itertools
 from copy     import deepcopy
-from iso9660  import ISO9660 as _ISO9660_orig
+from _iso9660 import ISO9660 as _ISO9660_orig
 from struct   import unpack
 from datetime import datetime
 from io       import BytesIO
@@ -65,7 +65,8 @@ class ISO9660(_ISO9660_orig):
 
         self._gdifile = AppendedFiles(self._dict1, self._dict2)
 
-        _ISO9660_orig.__init__(self, 'url') # So url doesn't starts with http
+        # _ISO9660_orig.__init__(self, 'url') # So url doesn't starts with http
+        super(ISO9660, self).__init__("url") # 你知道吗？Ubuntu 26.04系统内存在同名库！你知道吗？找到这个意想不到的点，我绕了多少弯路？AI都被绕傻了
 
         if 'verbose' in kwargs:
             self._verbose = kwargs.pop('verbose')
@@ -83,7 +84,7 @@ class ISO9660(_ISO9660_orig):
         self._buff = BytesIO(self._gdifile.read(length))
 
     def _unpack_record(self, read=0):
-        tmp = _ISO9660_orig._unpack_record(self, read)
+        tmp = super()._unpack_record(read)
         pointer = self._gdifile.tell()
         # Where are we in sectors?
         current_pointer_pos = pointer//2048
@@ -382,7 +383,8 @@ class GDIfile(ISO9660):
     """
     def __init__(self, filename, **kwargs): # Isn't OO programming wonderful?
         verbose = kwargs['verbose'] if 'verbose' in kwargs else False
-        ISO9660.__init__(self, parse_gdi(filename, verbose=verbose), **kwargs)
+        # ISO9660.__init__(self, parse_gdi(filename, verbose=verbose), **kwargs)
+        super(GDIfile, self).__init__(parse_gdi(filename, verbose=verbose), **kwargs)
         self._gdi_filename = filename
 
     def __enter__(self):
@@ -510,11 +512,13 @@ class OffsetedFile(CdImage):
         if (len(args) > 0) and (args[0] not in ['r','rb']):
             raise NotImplementedError('Only read mode is implemented.')
 
-        CdImage.__init__(self, filename, **kwargs)
+        # CdImage.__init__(self, filename, **kwargs)
+        super(OffsetedFile, self).__init__(filename, **kwargs)
 
-        CdImage.seek(self,0,2)
-        self.length = CdImage.tell(self)
-        CdImage.seek(self,0,0)
+        super().seek(0,2)
+        # self.length = CdImage.tell(self)
+        self.length = super().tell()
+        super().seek(0,0)
 
         self.seek(0)
 
@@ -528,8 +532,8 @@ class OffsetedFile(CdImage):
             self.pointer = self.length + self.offset - a
 
         if self.pointer > self.offset:
-              CdImage.seek(self, self.pointer - self.offset)
-        else: CdImage.seek(self, 0)
+              super().seek(self.pointer - self.offset)
+        else: super().seek(0)
 
 
     def read(self, length = None):
@@ -540,7 +544,7 @@ class OffsetedFile(CdImage):
         if tmp >= self.offset:
             #print('AFTER OFFSET')
             self.seek(tmp)
-            data = CdImage.read(self, length)
+            data = super().read(length)
         elif FutureOffset < self.offset:
             #print('BEFORE OFFSET')
             data = b'\x00'*length
@@ -548,7 +552,7 @@ class OffsetedFile(CdImage):
             #print('CROSSING OFFSET')
             preData = b'\x00'*(self.offset - tmp)
             self.seek(self.offset)
-            postData = CdImage.read(self, FutureOffset - self.offset)
+            postData = super().read(FutureOffset - self.offset)
             data = preData + postData
         self.seek(FutureOffset)
         return data
@@ -576,7 +580,7 @@ class WormHoleFile(OffsetedFile):
         else:
             self.target, self.source, self.wormlen = [0,0,0]
 
-        OffsetedFile.__init__(self, *args, **kwargs)
+        super(WormHoleFile, self).__init__(*args, **kwargs)
 
 
     def read(self, length = None):
@@ -590,7 +594,7 @@ class WormHoleFile(OffsetedFile):
         # everything is fine
         if (tmp >= self.target + self.wormlen) or (FutureOffset < self.target):
             # print('OUT OF WORMHOLE')
-            data = OffsetedFile.read(self, length)
+            data = super().read(length)
 
         # If we start inside the wormhole, it's trickier
         elif tmp >= self.target:
@@ -601,16 +605,16 @@ class WormHoleFile(OffsetedFile):
             # If we don't exit the wormhole, it's somewhat simple
             if FutureOffset < self.target + self.wormlen:
                 # print('DON\'T EXIT IT')
-                data = OffsetedFile.read(self, length) # Read in the source
+                data = super().read(length) # Read in the source
 
             # If we exit the wormhole midway, it's even trickier
             else:
                 # print('EXIT IT')
                 inWorm_len = self.target + self.wormlen - tmp
                 outWorm_len = FutureOffset - self.target - self.wormlen
-                inWorm = OffsetedFile.read(self, inWorm_len)
+                inWorm = super().read(inWorm_len)
                 self.seek(self.target + self.wormlen)
-                outWorm = OffsetedFile.read(self, outWorm_len)
+                outWorm = super().read(outWorm_len)
                 data = inWorm + outWorm
 
         # If we start before the wormhole then hop inside, it's also
@@ -619,9 +623,9 @@ class WormHoleFile(OffsetedFile):
             # print('START BEFORE, ENTER IT')
             preWorm_len = self.target - tmp
             inWorm_len = FutureOffset - self.target
-            preWorm = OffsetedFile.read(self, preWorm_len)
+            preWorm = super().read(preWorm_len)
             self.seek(self.source)
-            inWorm = OffsetedFile.read(self, inWorm_len)
+            inWorm = super().read(inWorm_len)
             data = preWorm + inWorm
 
         # Now if we start before the wormhole and jump over it, it's
@@ -632,11 +636,11 @@ class WormHoleFile(OffsetedFile):
             inWorm_len = self.wormlen
             postWorm_len = FutureOffset - self.target - self.wormlen
 
-            preWorm = OffsetedFile.read(preWorm_len)
+            preWorm = super().read(preWorm_len)
             self.seek(self.source)
-            inWorm = OffsetedFile.read(inWorm_len)
+            inWorm = super().read(inWorm_len)
             self.seek(self.target + inWorm_len)
-            postWorm = OffsetedFile.read(postWorm_len)
+            postWorm = super().read(postWorm_len)
 
             data = preWorm + inWorm + postWorm
 
@@ -1062,7 +1066,7 @@ def _printUsage(pname='gditools3.py'):
     print("""
 GDI Tools 3 v. {}
 
-Usage: {} -i input_gdi [options]
+Usage: {} -i input_gdi_json [options]
   -h, --help             Display this help
   -l, --list             List all files in the filesystem and exit
   -o [outdir]            Output directory. Default: gdi folder

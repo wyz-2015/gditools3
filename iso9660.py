@@ -18,7 +18,7 @@ class ISO9660IOError(IOError):
     def __str__(self):
         return "Path not found: %s" % self.path
 
-class ISO9660(object):
+class ISO9660():
     def __init__(self, url):
         self._buff  = None #input buffer
         self._root  = None #root node

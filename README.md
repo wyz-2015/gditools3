@@ -21,3 +21,16 @@ Features
  - Preserve the timestamp of extracted files
  - Usable as a library providing other programs with GDI-related functions
  - Python GUI (courtesy of [PySimpleGUI](https://github.com/MikeTheWatchGuy/PySimpleGUI)) with preview of text and image files and media playback via external player
+
+## fork分支修改说明
+
+原程序读取`.gdi`光碟索引文件有逻辑问题，对[Redump](http://redump.org/downloads/)版`.gdi`文件灾难性地无法读取。同时基础Py语法并不便于处理这类文件(怎么Py不自带个`scanf`、`fscanf`这样的函数呢……)，故只得额外编写了一个纯C小工具，**将`gdi`文件转换至中间态的`json`文件。使用主工具时应转为读入`json`文件。**
+
+小工具`gdi2json`依赖`libcjson`、同时使用了`argp.h`、`error.h`两个`GNU/Linux GLibC`提供的头文件，`MinGW`没有提供这些……
+
+为兼容原设计与`Redump`版`.gdi`文件，对轨道的读取逻辑设计为：
+
+1. `"%u%u%u%u%s%u"`
+2. `%u%u%u%u"一对半角英语双引号内的所有字，当然这串字里不该包含这个字符"%u`
+
+上述修改均于`Ubuntu 26.04` `Python 3.14`下进行，故只可确保于此环境中工作基本无恙。

@@ -52,7 +52,7 @@ imgExt   = set(["gif", "png", "jpg", "bmp", "pvr"])
 audioExt = set(["adx", "wav", "mp3"])
 videoExt = set(["avi", "wmv"])
 
-gdiFiles = (("GDI files", "*.gdi"),("All files", "*.*"))
+gdiFiles = (("GDI-Json files", "*.json"),("All files", "*.*"))
 if platform.system() == "Windows":
       exeFiles = (("Executable files", "*.exe *.cmd *.bat"),("All files", "*.*"))
 else: exeFiles = (("All files", "*.*"),)
@@ -129,7 +129,7 @@ def setStatus(msg):
 PREVIEW_TEXT = sg.WRITE_ONLY_KEY + 'previewText'
 
 def createWindow(treedata, img=None):
-    status = 'Welcome to gditools3gui {} (using gditools3 {})\nSelect a GDI disc image to explore; Select files to preview and [Dump].'.format(
+    status = 'Welcome to gditools3gui {} (using gditools3 {})\nSelect a GDI disc image (gdi-json file) to explore; Select files to preview and [Dump].'.format(
        __version__,
        gditools3.__version__,
     )
@@ -356,7 +356,7 @@ def set_mediaPlayer_path():
 def help():
     sg.Popup(
         'Help',
-        'Use this tool to browse, preview and extract files from SEGA Gigabyte Disc (GD-ROM) dumps in gdi format.',
+        'Use this tool to browse, preview and extract files from SEGA Gigabyte Disc (GD-ROM) dumps in gdi-json format.',
         'Select a "Disc Image" to browse its contents.',
         'Select the "Output Path" for file dumping.',
         'Select the full path to the "Media Player" of your choice (e.g., ffplay, vlc, ...) to play a selected video or audio file (such as .ADX).',
@@ -386,7 +386,7 @@ def limitations():
 def about():
     sg.Popup(
         'About',
-        'This is a simple tool to browse, preview and extract files from SEGA Gigabyte Disc (GD-ROM) dumps in gdi format.',
+        'This is a simple tool to browse, preview and extract files from SEGA Gigabyte Disc (GD-ROM) dumps in gdi-json format.',
         'gditools3gui v. {}, by Ricardo Mendonça Ferreira\n(inspired by "gditools.py GUI", from SiZiOUS).'.format(__version__),
         'gditools3 v. {}, by Ricardo Mendonça Ferreira\n(a Python 3 port from gditools by FamilyGuy).'.format(gditools3.__version__),
         'Python GUI framework by PySimpleGUI.',

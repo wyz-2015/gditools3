@@ -212,6 +212,18 @@ int main(int argc, char** argv)
 	write_to_json(jsonFile, &gdi);
 
 	GDI_Clear(&gdi);
+	if (args.autoJsonFilePath and args.jsonFilePath) {
+		free(args.jsonFilePath);
+		args.jsonFilePath = NULL;
+	}
+	if (gdiFile) {
+		fclose(gdiFile);
+		gdiFile = NULL;
+	}
+	if (jsonFile) {
+		fclose(jsonFile);
+		jsonFile = NULL;
+	}
 
 	return 0;
 }
